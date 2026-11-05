@@ -36,9 +36,18 @@ async function hashPasscode(value: string): Promise<string> {
   const bytes = new Uint8Array(await sign(value, required("PASSCODE_PEPPER")));
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
-async function hashParticipantPassword(value: string): Promise<string> {
-  const bytes = new Uint8Array(await sign(value, required("SESSION_SECRET")));
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+function newPasswordSalt(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+async function hashParticipantPassword(value: string, salt: string): Promise<string> {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(value), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({
+    name: "PBKDF2",
+    salt: new Uint8Array(salt.match(/.{2}/g)!.map((byte) => parseInt(byte, 16))),
+    iterations: 310000,
+    hash: "SHA-256",
+  }, key, 256);
+  return Array.from(new Uint8Array(bits), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 function safeEqual(a: string, b: string): boolean {
   let diff = a.length ^ b.length;
@@ -104,20 +113,23 @@ export default async function handler(req: any, res: any): Promise<void> {
       if (name.length < 2 || name.length > 50) return send(res, 400, { error: "Please enter a name between 2 and 50 characters." });
       if (password.length < 8 || password.length > 128) return send(res, 400, { error: "Your password must be between 8 and 128 characters." });
       const nameKey = name.toLowerCase();
-      const passwordHash = await hashParticipantPassword(password);
-      let person = (await db("cicada_participants?select=id,name,password_hash,unlocked_through&name_key=eq." + encodeURIComponent(nameKey) + "&limit=1"))[0];
+      const lookup = "cicada_participants?select=id,name,password_hash,password_salt,unlocked_through&name_key=eq." + encodeURIComponent(nameKey) + "&limit=1";
+      let person = (await db(lookup))[0];
       let isNew = false;
       if (person) {
-        if (!safeEqual(person.password_hash, passwordHash)) return send(res, 401, { error: "That name already has an account. Check the password and try again." });
+        const candidateHash = await hashParticipantPassword(password, person.password_salt);
+        if (!safeEqual(person.password_hash, candidateHash)) return send(res, 401, { error: "That name already has an account. Check the password and try again." });
       } else {
+        const salt = newPasswordSalt();
+        const passwordHash = await hashParticipantPassword(password, salt);
         try {
-          const rows = await db("cicada_participants", "POST", { name, password_hash: passwordHash }, "return=representation");
+          const rows = await db("cicada_participants", "POST", { name, password_hash: passwordHash, password_salt: salt }, "return=representation");
           person = rows[0];
           isNew = true;
         } catch (error) {
           // A simultaneous first login may have created this name. Fetch that account and verify its password.
-          person = (await db("cicada_participants?select=id,name,password_hash,unlocked_through&name_key=eq." + encodeURIComponent(nameKey) + "&limit=1"))[0];
-          if (!person || !safeEqual(person.password_hash, passwordHash)) throw error;
+          person = (await db(lookup))[0];
+          if (!person || !safeEqual(person.password_hash, await hashParticipantPassword(password, person.password_salt))) throw error;
         }
       }
       const age = 60 * 60 * 24 * 60;
