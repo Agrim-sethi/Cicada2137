@@ -1,36 +1,54 @@
 # Cicada2137 · Sanawar Treasure Hunt
 
-A small Vite + TypeScript treasure-hunt page based on the supplied
-`sanawar_treasure_hunt_v2.html`.
+A Vite + TypeScript treasure hunt with a Supabase database and Vercel serverless API.
 
-## Run locally
+## Local development
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Production build
+The public hunt runs at `/`. The organiser dashboard is at `/admin.html`.
 
-```bash
-npm run build
-npm run preview
-```
+## Required Vercel environment variables
 
-Vite writes the production site to `dist/`. The included `vercel.json`
-configures Vercel to run the build and publish that folder.
+Set these in **Vercel → Project → Settings → Environment Variables** for Production (and Preview if you use it):
 
-## Set the chit passcodes
+| Variable | Value |
+| --- | --- |
+| `SUPABASE_URL` | `https://mxmtzmtxuldlhesrpbuf.supabase.co` |
+| `SUPABASE_SECRET_KEY` | The Supabase **secret** API key from Project Settings → API Keys. Keep it server-side. |
+| `SESSION_SECRET` | A random secret of at least 32 characters, used to sign participant and admin cookies. |
+| `PASSCODE_PEPPER` | A different random secret of at least 32 characters, used to hash passcodes before they are stored. |
+| `ADMIN_PASSWORD` | A strong, private password for `/admin.html`. |
 
-Open `src/main.ts` and edit the `PASSCODES` array near the top:
+Never add these values to frontend code or commit them to GitHub. After setting or changing the variables, redeploy Vercel. Generate independent random values for the session secret and passcode pepper; do not reuse the admin password for either.
 
-```ts
-const PASSCODES: readonly string[] = ["00", "00", "00"];
-```
+## Database
 
-Replace the three temporary `00` values with the actual codes printed on
-the three campus chits. The passcodes are currently placeholders carried
-over from the supplied HTML.
+The Supabase migration creates three RLS-protected tables:
 
-Unlocked progress is saved in the browser's local storage. The Review
-puzzles button returns to Puzzle 1 without erasing unlocked progress.
+- `cicada_puzzles`: the three riddle texts and keyed passcode hashes.
+- `cicada_participants`: participant names and current unlocked puzzle.
+- `cicada_completions`: the timestamp for each puzzle completed by each participant.
+
+Only the server-side Supabase secret key is granted access to these tables. The browser never receives the secret key or passcode hashes.
+
+## Configure passcodes
+
+1. Add the Vercel environment variables above and redeploy.
+2. Open `/admin.html` on your deployed site.
+3. Sign in using `ADMIN_PASSWORD`.
+4. Set a passcode for each puzzle in the Passcodes section.
+5. Passcodes are HMAC-hashed on the server before being stored.
+
+The previous HTML contained temporary `00` codes. The database starts with no configured passcodes, so the hunt cannot be completed until the organiser sets the real chit codes.
+
+## Participant behaviour
+
+Participants enter a name once. A signed, HTTP-only cookie keeps their session and the database stores their progress. If a participant clears browser cookies or changes device, they will need to register again. This name-only setup does not include account recovery or identity verification.
+
+## Admin dashboard
+
+The admin page shows participant names, join/last-active times, puzzle completion timestamps and overall completion status. It also lets the organiser set or replace puzzle passcodes. Admin access is protected by an environment-stored password and a signed, HTTP-only session cookie.
