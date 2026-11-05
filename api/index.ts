@@ -36,6 +36,10 @@ async function hashPasscode(value: string): Promise<string> {
   const bytes = new Uint8Array(await sign(value, required("PASSCODE_PEPPER")));
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
+async function hashParticipantPassword(value: string): Promise<string> {
+  const bytes = new Uint8Array(await sign(value, required("SESSION_SECRET")));
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
 function safeEqual(a: string, b: string): boolean {
   let diff = a.length ^ b.length;
   for (let i = 0; i < Math.max(a.length, b.length); i++) diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
@@ -96,12 +100,29 @@ export default async function handler(req: any, res: any): Promise<void> {
   try {
     if (action === "register" && method === "POST") {
       const name = typeof body.name === "string" ? body.name.trim().replace(/\s+/g, " ") : "";
+      const password = typeof body.password === "string" ? body.password : "";
       if (name.length < 2 || name.length > 50) return send(res, 400, { error: "Please enter a name between 2 and 50 characters." });
-      const rows = await db("cicada_participants", "POST", { name }, "return=representation");
-      const person = rows[0];
+      if (password.length < 8 || password.length > 128) return send(res, 400, { error: "Your password must be between 8 and 128 characters." });
+      const nameKey = name.toLowerCase();
+      const passwordHash = await hashParticipantPassword(password);
+      let person = (await db("cicada_participants?select=id,name,password_hash,unlocked_through&name_key=eq." + encodeURIComponent(nameKey) + "&limit=1"))[0];
+      let isNew = false;
+      if (person) {
+        if (!safeEqual(person.password_hash, passwordHash)) return send(res, 401, { error: "That name already has an account. Check the password and try again." });
+      } else {
+        try {
+          const rows = await db("cicada_participants", "POST", { name, password_hash: passwordHash }, "return=representation");
+          person = rows[0];
+          isNew = true;
+        } catch (error) {
+          // A simultaneous first login may have created this name. Fetch that account and verify its password.
+          person = (await db("cicada_participants?select=id,name,password_hash,unlocked_through&name_key=eq." + encodeURIComponent(nameKey) + "&limit=1"))[0];
+          if (!person || !safeEqual(person.password_hash, passwordHash)) throw error;
+        }
+      }
       const age = 60 * 60 * 24 * 60;
       await setSession(res, participantCookie, { role: "participant", participantId: person.id }, age);
-      return send(res, 201, { participant: { name: person.name, unlockedThrough: person.unlocked_through } });
+      return send(res, isNew ? 201 : 200, { participant: { name: person.name, unlockedThrough: person.unlocked_through }, isNew });
     }
 
     if (action === "progress" && method === "GET") {
