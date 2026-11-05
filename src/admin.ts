@@ -69,6 +69,29 @@ function drawPeople(): void {
       if (index === 1 && p.completions.length === 3) cell.className = "complete";
       row.append(cell);
     });
+    const actionCell = document.createElement("td");
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "danger-button";
+    deleteButton.textContent = "Delete";
+    deleteButton.setAttribute("aria-label", "Delete participant " + p.name);
+    deleteButton.addEventListener("click", async () => {
+      const confirmed = window.confirm("Delete " + p.name + "? This permanently removes their account and all saved puzzle progress.");
+      if (!confirmed) return;
+      deleteButton.disabled = true;
+      try {
+        await api<{ ok: boolean; name: string }>("admin-delete-participant", {
+          method: "POST", body: JSON.stringify({ id: p.id }),
+        });
+        note(dashboardFeedback, p.name + " and their saved progress have been deleted.", true);
+        await load();
+      } catch (error) {
+        note(dashboardFeedback, error instanceof Error ? error.message : "Could not delete participant.");
+        deleteButton.disabled = false;
+      }
+    });
+    actionCell.append(deleteButton);
+    row.append(actionCell);
     peopleBody.append(row);
   }
 }
