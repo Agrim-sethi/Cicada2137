@@ -211,6 +211,18 @@ export default async function handler(req: any, res: any): Promise<void> {
       })) });
     }
 
+    if (action === "admin-delete-participant" && method === "POST") {
+      if (!(await isAdmin(req))) return send(res, 401, { error: "Admin sign-in required." });
+      const id = typeof body.id === "string" ? body.id : "";
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+        return send(res, 400, { error: "Choose a valid participant." });
+      }
+      const existing = (await db("cicada_participants?select=id,name&id=eq." + encodeURIComponent(id) + "&limit=1"))[0];
+      if (!existing) return send(res, 404, { error: "That participant no longer exists. Refresh the table." });
+      await db("cicada_completions?participant_id=eq." + encodeURIComponent(id), "DELETE", undefined, "return=minimal");
+      await db("cicada_participants?id=eq." + encodeURIComponent(id), "DELETE", undefined, "return=minimal");
+      return send(res, 200, { ok: true, name: existing.name });
+    }
     if (action === "admin-puzzles" && (method === "GET" || method === "POST")) {
       if (!(await isAdmin(req))) return send(res, 401, { error: "Admin sign-in required." });
       if (method === "GET") {
