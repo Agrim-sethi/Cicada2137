@@ -87,8 +87,15 @@ async function db(path: string, method = "GET", body?: unknown, prefer?: string)
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   if (!response.ok) throw new Error("Supabase returned " + response.status + ": " + (await response.text()).slice(0, 300));
-  if (response.status === 204) return null;
-  return response.json();
+  // PostgREST may return an empty body for successful writes using return=minimal.
+  // Do not attempt JSON parsing unless the response actually contains a body.
+  const responseText = await response.text();
+  if (!responseText.trim()) return null;
+  try {
+    return JSON.parse(responseText);
+  } catch {
+    throw new Error("Supabase returned invalid JSON for " + method + " " + path.split("?")[0] + " (HTTP " + response.status + ").");
+  }
 }
 async function getParticipant(req: any): Promise<any | null> {
   const session = await readSession(req, participantCookie, "participant");
