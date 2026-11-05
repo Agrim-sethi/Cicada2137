@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#17372d" />
+  <title>Cicada2137 · Admin</title>
+</head>
+<body>
+  <main class="admin-page">
+    <header class="admin-header">
+      <div><p class="school">The Lawrence School · Sanawar</p><h1>Cicada2137 Admin</h1><p class="subtitle">Participant progress and puzzle controls</p></div>
+      <a href="/">View treasure hunt</a>
+    </header>
+
+    <section class="panel login-panel" id="loginPanel">
+      <p class="eyebrow">Restricted area</p><h2>Organiser sign-in</h2>
+      <form id="loginForm">
+        <label for="adminPassword">Admin password</label>
+        <div class="form-row"><input id="adminPassword" type="password" autocomplete="current-password" required /><button class="primary" id="loginButton">Sign in</button></div>
+        <p class="feedback" id="loginFeedback" role="status"></p>
+      </form>
+    </section>
+
+    <section id="dashboard" hidden>
+      <div class="dashboard-heading"><div><p class="eyebrow">Live overview</p><h2>Hunt dashboard</h2></div><div class="actions"><button class="secondary" id="refreshButton">Refresh</button><button class="secondary" id="logoutButton">Sign out</button></div></div>
+      <div class="stats">
+        <article class="stat"><span>Total participants</span><strong id="totalParticipants">0</strong></article>
+        <article class="stat"><span>Completed hunt</span><strong id="completedParticipants">0</strong></article>
+        <article class="stat"><span>In progress</span><strong id="activeParticipants">0</strong></article>
+      </div>
+      <section class="panel">
+        <div class="section-heading"><div><p class="eyebrow">Organiser controls</p><h2>Passcodes</h2></div><p class="note">Codes are hashed before storage.</p></div>
+        <div id="puzzleSettings" class="puzzle-settings"></div><p class="feedback" id="puzzleFeedback" role="status"></p>
+      </section>
+      <section class="panel">
+        <div class="section-heading"><div><p class="eyebrow">The people on the trail</p><h2>Participants</h2></div><input id="searchInput" class="search" type="search" placeholder="Search names…" aria-label="Search participants" /></div>
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Progress</th><th>Completion times</th><th>Joined</th><th>Last active</th></tr></thead><tbody id="participantsBody"><tr><td colspan="5">Loading…</td></tr></tbody></table></div>
+        <p class="feedback" id="dashboardFeedback" role="status"></p>
+      </section>
+    </section>
+  </main>
+  <script type="module" src="/src/admin.ts"></script>
+</body>
+</html>
