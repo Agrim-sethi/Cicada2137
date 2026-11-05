@@ -300,3 +300,41 @@ input:focus {
     width: 100%;
   }
 }
+
+
+.welcome-panel {
+  margin: 28px 0 22px;
+  padding: clamp(23px, 5vw, 38px);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--gold);
+  border-radius: 4px;
+}
+.welcome-panel h2 {
+  margin: 0 0 10px;
+  color: var(--green);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(25px, 4vw, 32px);
+  font-weight: 600;
+}
+.welcome-copy {
+  max-width: 570px;
+  margin: 0 0 23px;
+  color: #424d45;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.welcome-panel label {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 700;
+}
+.participant-line {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.participant-line strong { color: var(--green); }
+#gameArea[hidden], .welcome-panel[hidden] { display: none; }
