@@ -138,7 +138,7 @@ export default async function handler(req: any, res: any): Promise<void> {
       return send(res, 200, { correct: true, unlockedThrough: next, completed: id === 3, message: id === 3 ? "Correct. You have completed the treasure hunt!" : "Correct passcode. The next puzzle is now unlocked." });
     }
 
-    if (action === "admin-login" && method === "POST") {
+    if (action === "participant-logout" && method === "POST") {\n      const secure = env.VERCEL === "1" || env.NODE_ENV === "production" ? "; Secure" : "";\n      res.setHeader("Set-Cookie", participantCookie + "=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0" + secure);\n      return send(res, 200, { ok: true });\n    }\n\n    if (action === "admin-login" && method === "POST") {
       const password = typeof body.password === "string" ? body.password : "";
       if (!safeEqual(password, required("ADMIN_PASSWORD"))) return send(res, 401, { error: "That admin password is not correct." });
       await setSession(res, adminCookie, { role: "admin" }, 60 * 60 * 8);
