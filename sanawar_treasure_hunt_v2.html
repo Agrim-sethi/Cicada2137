@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#17372d" />
+  <title>Sanawar Treasure Hunt</title>
+  <style>
+    :root {
+      --green: #17372d;
+      --green-2: #244b3e;
+      --gold: #b89455;
+      --paper: #fffefa;
+      --page: #f3f4f0;
+      --ink: #202820;
+      --muted: #68736b;
+      --line: #dce2dc;
+      --error: #a33d31;
+      --success: #286b49;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .page {
+      width: min(860px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 34px 0 54px;
+    }
+
+    header {
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--green);
+    }
+
+    .school {
+      margin: 0 0 7px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--green);
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: clamp(29px, 5vw, 42px);
+      font-weight: 600;
+    }
+
+    .instructions {
+      margin: 24px 0 22px;
+      padding: 17px 19px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--gold);
+    }
+
+    .instructions h2 {
+      margin: 0 0 6px;
+      color: var(--green);
+      font-size: 16px;
+    }
+
+    .instructions p {
+      margin: 0;
+      color: #424d45;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .puzzle-nav {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .nav-button {
+      min-height: 52px;
+      padding: 12px 10px;
+      border: 1px solid #cbd5ce;
+      border-radius: 4px;
+      background: #e8ece8;
+      color: #68736b;
+      cursor: not-allowed;
+      font: 700 14px Arial, Helvetica, sans-serif;
+      transition: background .15s ease, color .15s ease, border-color .15s ease;
+    }
+
+    .nav-button.available {
+      background: var(--paper);
+      color: var(--green);
+      border-color: #aebdb2;
+      cursor: pointer;
+    }
+
+    .nav-button.available:hover { border-color: var(--green); }
+
+    .nav-button.active {
+      background: var(--green);
+      border-color: var(--green);
+      color: white;
+      cursor: pointer;
+    }
+
+    .nav-button.completed:not(.active) {
+      background: #e6eee8;
+      border-color: #b9cdbd;
+      color: var(--success);
+    }
+
+    .riddle-card {
+      padding: clamp(23px, 5vw, 42px);
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+    }
+
+    .riddle-label {
+      margin: 0 0 12px;
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    h2#puzzleTitle {
+      margin: 0 0 24px;
+      color: var(--green);
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: clamp(25px, 4vw, 33px);
+      font-weight: 600;
+    }
+
+    .riddle-copy {
+      color: #29342d;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: clamp(18px, 2.4vw, 21px);
+      line-height: 1.85;
+    }
+
+    .riddle-copy p { margin: 0 0 17px; }
+    .riddle-copy p:last-child { margin-bottom: 0; }
+    .riddle-copy strong { color: #865f2d; font-weight: 700; }
+
+    .code-panel {
+      margin-top: 16px;
+      padding: 19px;
+      background: #e9ede9;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+    }
+
+    .code-panel label {
+      display: block;
+      margin-bottom: 9px;
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .code-row { display: flex; gap: 9px; }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      height: 46px;
+      padding: 0 13px;
+      border: 1px solid #b9c5bb;
+      border-radius: 3px;
+      background: white;
+      color: var(--ink);
+      font-size: 16px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--green-2);
+      box-shadow: 0 0 0 2px rgba(36, 75, 62, .12);
+    }
+
+    .submit-button, .restart-button {
+      min-height: 46px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 3px;
+      background: var(--green);
+      color: white;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .submit-button:hover, .restart-button:hover { background: var(--green-2); }
+
+    .feedback {
+      min-height: 18px;
+      margin: 9px 0 0;
+      color: var(--error);
+      font-size: 13px;
+    }
+
+    .feedback.success { color: var(--success); }
+
+    .completion {
+      display: none;
+      padding: 32px 24px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .completion.show { display: block; }
+    .completion h2 {
+      margin: 0 0 18px;
+      color: var(--green);
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 30px;
+    }
+
+    @media (max-width: 520px) {
+      .page { width: min(100% - 24px, 860px); padding-top: 24px; }
+      .puzzle-nav { gap: 5px; }
+      .nav-button { padding: 10px 4px; font-size: 12px; }
+      .code-row { flex-direction: column; }
+      .submit-button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <p class="school">The Lawrence School · Sanawar</p>
+      <h1>Treasure Hunt</h1>
+    </header>
+
+    <section class="instructions" aria-labelledby="instructionsTitle">
+      <h2 id="instructionsTitle">Instructions</h2>
+      <p>Read the riddle and find the corresponding chit on campus. Enter the passcode written on the chit to unlock the next puzzle. Complete all three puzzles in order.</p>
+    </section>
+
+    <nav class="puzzle-nav" aria-label="Puzzle navigation">
+      <button class="nav-button active available" type="button" data-nav="0" aria-current="step">Puzzle 1</button>
+      <button class="nav-button" type="button" data-nav="1" disabled>Puzzle 2 · Locked</button>
+      <button class="nav-button" type="button" data-nav="2" disabled>Puzzle 3 · Locked</button>
+    </nav>
+
+    <section id="puzzleSection" aria-live="polite">
+      <article class="riddle-card" id="riddleCard">
+        <p class="riddle-label" id="puzzleNumber">Puzzle 1 of 3</p>
+        <h2 id="puzzleTitle">The Tuck Shop</h2>
+        <div class="riddle-copy" id="riddleCopy">
+          <p>Out of the right corner of my <strong>EYE</strong>, i saw a number not too <strong>HIGH</strong></p>
+          <p>When through my checque, i bought a single <strong>CHOCOPIE</strong>, there i saw it, painted in red, i won't <strong>LIE</strong></p>
+        </div>
+      </article>
+
+      <form class="code-panel" id="codeForm" autocomplete="off">
+        <label for="codeInput">Enter the passcode from the chit</label>
+        <div class="code-row">
+          <input id="codeInput" name="passcode" type="text" inputmode="numeric" maxlength="8" placeholder="Enter passcode" aria-label="Enter the passcode from the chit" />
+          <button class="submit-button" id="submitButton" type="submit">Submit</button>
+        </div>
+        <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="completion" id="completion" aria-live="polite">
+      <h2>All three puzzles completed.</h2>
+      <button class="restart-button" id="restartButton" type="button">Review puzzles</button>
+    </section>
+  </main>
+
+  <script>
+    // Temporary passcodes. Replace these with the actual codes from the chits.
+    const PASSCODES = ["00", "00", "00"];
+
+    // Original wording supplied for the treasure hunt.
+    const puzzles = [
+      {
+        title: "The Tuck Shop",
+        html: `
+          <p>Out of the right corner of my <strong>EYE</strong>, i saw a number not too <strong>HIGH</strong></p>
+          <p>When through my checque, i bought a single <strong>CHOCOPIE</strong>, there i saw it, painted in red, i won't <strong>LIE</strong></p>
+        `
+      },
+      {
+        title: "The Sundial",
+        html: `
+          <p>When it's the first school of the <strong>DAY</strong>, something right outside the world of wisdom points to something, they <strong>SAY</strong>; All i can say is let your <strong>WAY</strong> be guided by the <strong>SUNRAY</strong>.</p>
+        `
+      },
+      {
+        title: "The Cannons",
+        html: `
+          <p>After 22 years of <strong>GLOOM</strong>, its about to go <strong>BOOM</strong>, But the two similar things that used to be the cause of <strong>DOOM</strong>, now lay still near some bright stairs, after all the danger they once used to <strong>LOOM</strong>.</p>
+        `
+      }
+    ];
+
+    let currentPuzzle = 0;
+    let unlockedThrough = 0;
+    const navButtons = [...document.querySelectorAll("[data-nav]")];
+    const codeForm = document.getElementById("codeForm");
+    const codeInput = document.getElementById("codeInput");
+    const feedback = document.getElementById("feedback");
+    const puzzleSection = document.getElementById("puzzleSection");
+    const completion = document.getElementById("completion");
+
+    function updateNavigation() {
+      navButtons.forEach((button, index) => {
+        const available = index <= unlockedThrough;
+        const completed = index < unlockedThrough;
+        button.disabled = !available;
+        button.classList.toggle("available", available);
+        button.classList.toggle("active", index === currentPuzzle);
+        button.classList.toggle("completed", completed);
+        button.textContent = `Puzzle ${index + 1}${available ? (completed ? " · Complete" : "") : " · Locked"}`;
+        if (index === currentPuzzle) button.setAttribute("aria-current", "step");
+        else button.removeAttribute("aria-current");
+      });
+    }
+
+    function renderPuzzle(index) {
+      currentPuzzle = index;
+      const puzzle = puzzles[index];
+      document.getElementById("puzzleNumber").textContent = `Puzzle ${index + 1} of 3`;
+      document.getElementById("puzzleTitle").textContent = puzzle.title;
+      document.getElementById("riddleCopy").innerHTML = puzzle.html;
+      codeInput.value = "";
+      feedback.textContent = "";
+      feedback.classList.remove("success");
+      updateNavigation();
+    }
+
+    navButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const index = Number(button.dataset.nav);
+        if (index <= unlockedThrough) renderPuzzle(index);
+      });
+    });
+
+    codeForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const entered = codeInput.value.trim();
+
+      if (entered !== PASSCODES[currentPuzzle]) {
+        feedback.textContent = "Incorrect passcode. Please check the chit and try again.";
+        feedback.classList.remove("success");
+        codeInput.select();
+        return;
+      }
+
+      if (currentPuzzle < puzzles.length - 1) {
+        unlockedThrough = Math.max(unlockedThrough, currentPuzzle + 1);
+        feedback.textContent = "Correct passcode. The next puzzle is now unlocked.";
+        feedback.classList.add("success");
+        updateNavigation();
+        window.setTimeout(() => renderPuzzle(currentPuzzle + 1), 350);
+      } else {
+        puzzleSection.style.display = "none";
+        completion.classList.add("show");
+      }
+    });
+
+    document.getElementById("restartButton").addEventListener("click", () => {
+      unlockedThrough = 0;
+      completion.classList.remove("show");
+      puzzleSection.style.display = "";
+      renderPuzzle(0);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    updateNavigation();
+  </script>
+</body>
+</html>
