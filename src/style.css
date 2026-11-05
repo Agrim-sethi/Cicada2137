@@ -338,3 +338,24 @@ input:focus {
 }
 .participant-line strong { color: var(--green); }
 #gameArea[hidden], .welcome-panel[hidden] { display: none; }
+
+.participant-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.logout-button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #b9c5bb;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--green);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+.logout-button:hover { background: #e9ede9; }
+.logout-button:disabled { opacity: .6; cursor: wait; }
