@@ -11,20 +11,20 @@ const PASSCODES: readonly string[] = ["00", "00", "00"];
 
 const puzzles: readonly Puzzle[] = [
   {
-    title: "The Tuck Shop",
+    title: "Find The Nummber",
     html: `
       <p>Out of the right corner of my <strong>EYE</strong>, i saw a number not too <strong>HIGH</strong></p>
       <p>When through my checque, i bought a single <strong>CHOCOPIE</strong>, there i saw it, painted in red, i won't <strong>LIE</strong></p>
     `,
   },
   {
-    title: "The Sundial",
+    title: "Enter What You Found Upon Searching Through The Something Described Below",
     html: `
       <p>When it's the first school of the <strong>DAY</strong>, something right outside the world of wisdom points to something, they <strong>SAY</strong>; All i can say is let your <strong>WAY</strong> be guided by the <strong>SUNRAY</strong>.</p>
     `,
   },
   {
-    title: "The Cannons",
+    title: "Enter What You Found Upon Searching Through The Something Described Below",
     html: `
       <p>After 22 years of <strong>GLOOM</strong>, its about to go <strong>BOOM</strong>, But the two similar things that used to be the cause of <strong>DOOM</strong>, now lay still near some bright stairs, after all the danger they once used to <strong>LOOM</strong>.</p>
     `,
