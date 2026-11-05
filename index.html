@@ -1,66 +1,54 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#17372d" />
-    <meta
-      name="description"
-      content="The Lawrence School Sanawar Treasure Hunt"
-    />
-    <title>Sanawar Treasure Hunt</title>
-  </head>
-  <body>
-    <main class="page">
-      <header>
-        <p class="school">The Lawrence School · Sanawar</p>
-        <h1>Treasure Hunt</h1>
-      </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#17372d" />
+  <meta name="description" content="The Lawrence School Sanawar Treasure Hunt" />
+  <title>Sanawar Treasure Hunt</title>
+</head>
+<body>
+  <main class="page">
+    <header><p class="school">The Lawrence School · Sanawar</p><h1>Treasure Hunt</h1></header>
 
+    <section class="welcome-panel" id="welcomePanel" aria-labelledby="welcomeTitle">
+      <p class="riddle-label">Before you begin</p>
+      <h2 id="welcomeTitle">Enter your name</h2>
+      <p class="welcome-copy">Your progress will be saved, so you can return to the hunt without losing your place.</p>
+      <form id="nameForm" autocomplete="on">
+        <label for="nameInput">Participant name</label>
+        <div class="code-row">
+          <input id="nameInput" name="name" type="text" maxlength="50" placeholder="Your name" autocomplete="name" required />
+          <button class="submit-button" id="startButton" type="submit">Start hunt</button>
+        </div>
+        <p class="feedback" id="welcomeFeedback" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <div id="gameArea" hidden>
       <section class="instructions" aria-labelledby="instructionsTitle">
         <h2 id="instructionsTitle">Instructions</h2>
-        <p>
-          Read the riddle and find the corresponding chit on campus. Enter the
-          passcode written on the chit to unlock the next puzzle. Complete all
-          three puzzles in order.
-        </p>
+        <p>Read the riddle and find the corresponding chit on campus. Enter the passcode written on the chit to unlock the next puzzle. Complete all three puzzles in order.</p>
+        <p class="participant-line">Playing as <strong id="participantName"></strong></p>
       </section>
 
       <nav class="puzzle-nav" aria-label="Puzzle navigation">
-        <button class="nav-button active available" type="button" data-nav="0" aria-current="step">
-          Puzzle 1
-        </button>
-        <button class="nav-button" type="button" data-nav="1" disabled>
-          Puzzle 2 · Locked
-        </button>
-        <button class="nav-button" type="button" data-nav="2" disabled>
-          Puzzle 3 · Locked
-        </button>
+        <button class="nav-button active available" type="button" data-nav="1">Puzzle 1</button>
+        <button class="nav-button" type="button" data-nav="2" disabled>Puzzle 2 · Locked</button>
+        <button class="nav-button" type="button" data-nav="3" disabled>Puzzle 3 · Locked</button>
       </nav>
 
       <section id="puzzleSection" aria-live="polite">
         <article class="riddle-card" id="riddleCard">
           <p class="riddle-label" id="puzzleNumber">Puzzle 1 of 3</p>
-          <h2 id="puzzleTitle">The Tuck Shop</h2>
+          <h2 id="puzzleTitle">Loading puzzle…</h2>
           <div class="riddle-copy" id="riddleCopy"></div>
         </article>
-
         <form class="code-panel" id="codeForm" autocomplete="off">
           <label for="codeInput">Enter the passcode from the chit</label>
           <div class="code-row">
-            <input
-              id="codeInput"
-              name="passcode"
-              type="text"
-              inputmode="numeric"
-              maxlength="8"
-              placeholder="Enter passcode"
-              aria-label="Enter the passcode from the chit"
-              required
-            />
-            <button class="submit-button" id="submitButton" type="submit">
-              Submit
-            </button>
+            <input id="codeInput" name="passcode" type="text" inputmode="text" maxlength="32" placeholder="Enter passcode" aria-label="Enter the passcode from the chit" required />
+            <button class="submit-button" id="submitButton" type="submit">Submit</button>
           </div>
           <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
         </form>
@@ -69,15 +57,11 @@
       <section class="completion" id="completion" aria-live="polite" hidden>
         <p class="riddle-label">The hunt is complete</p>
         <h2>All three puzzles completed.</h2>
-        <p class="completion-copy">
-          You have followed every clue. Well done.
-        </p>
-        <button class="restart-button" id="restartButton" type="button">
-          Review puzzles
-        </button>
+        <p class="completion-copy">You have followed every clue. Well done.</p>
+        <button class="restart-button" id="restartButton" type="button">Review puzzles</button>
       </section>
-    </main>
-
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+    </div>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
 </html>
