@@ -1,3 +1,5 @@
+import "./style.css";
+
 type Puzzle = {
   title: string;
   html: string;
@@ -160,8 +162,9 @@ codeForm.addEventListener("submit", (event: SubmitEvent) => {
     showFeedback("Correct passcode. The next puzzle is now unlocked.", true);
     updateNavigation();
 
+    const nextPuzzle = currentPuzzle + 1;
     window.setTimeout(() => {
-      renderPuzzle(currentPuzzle + 1);
+      renderPuzzle(nextPuzzle);
     }, 350);
     return;
   }
