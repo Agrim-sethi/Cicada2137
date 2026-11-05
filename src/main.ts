@@ -27,7 +27,7 @@ const nameForm = el<HTMLFormElement>("nameForm");
 const nameInput = el<HTMLInputElement>("nameInput");
 const startButton = el<HTMLButtonElement>("startButton");
 const welcomeFeedback = el<HTMLElement>("welcomeFeedback");
-const participantName = el<HTMLElement>("participantName");
+const participantName = el<HTMLElement>("participantName");\nconst participantLogout = el<HTMLButtonElement>("participantLogout");
 const nav = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-nav]"));
 const codeForm = el<HTMLFormElement>("codeForm");
 const codeInput = el<HTMLInputElement>("codeInput");
@@ -119,7 +119,7 @@ nameForm.addEventListener("submit", async (event) => {
     say(welcomeFeedback, error instanceof Error ? error.message : "Could not start the hunt.");
   } finally { startButton.disabled = false; }
 });
-nav.forEach((button) => button.addEventListener("click", () => renderPuzzle(Number(button.dataset.nav))));
+participantLogout.addEventListener("click", async () => {\n  participantLogout.disabled = true;\n  try {\n    await api("participant-logout", { method: "POST", body: "{}" });\n    progress = null;\n    nameInput.value = "";\n    showWelcome("You have been logged out. Enter your name to start again.");\n  } catch (error) {\n    window.alert(error instanceof Error ? error.message : "Could not log out. Please try again.");\n  } finally { participantLogout.disabled = false; }\n});\nnav.forEach((button) => button.addEventListener("click", () => renderPuzzle(Number(button.dataset.nav))));
 codeForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const passcode = codeInput.value.trim();
