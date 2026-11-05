@@ -145,7 +145,7 @@ codeForm.addEventListener("submit", (event: SubmitEvent) => {
   const entered = codeInput.value.trim();
 
   if (!entered) {
-    showFeedback("Please enter the passcode from the chit.");
+    showFeedback("");
     codeInput.focus();
     return;
   }
