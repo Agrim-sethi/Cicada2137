@@ -11,7 +11,7 @@ const PASSCODES: readonly string[] = ["00", "00", "00"];
 
 const puzzles: readonly Puzzle[] = [
   {
-    title: "Find The Nummber",
+    title: "Find The Number",
     html: `
       <p>Out of the right corner of my <strong>EYE</strong>, i saw a number not too <strong>HIGH</strong></p>
       <p>When through my checque, i bought a single <strong>CHOCOPIE</strong>, there i saw it, painted in red, i won't <strong>LIE</strong></p>
