@@ -75,7 +75,9 @@ function renderPuzzle(id: number): void {
   puzzleTitle.textContent = puzzle.title;
   riddleCopy.innerHTML = puzzle.riddle_html;
   codeInput.value = "";
-  say(feedback, "");
+  const alreadyCompleted = progress.completions.some((item) => item.puzzleId === id);
+  codeForm.hidden = alreadyCompleted;
+  say(feedback, alreadyCompleted ? "You have already completed this puzzle." : "", alreadyCompleted);
   submitButton.disabled = false;
   puzzleSection.hidden = false;
   completion.hidden = true;
