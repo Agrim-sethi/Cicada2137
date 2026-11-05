@@ -19,8 +19,13 @@
         <label for="nameInput">Participant name</label>
         <div class="code-row">
           <input id="nameInput" name="name" type="text" maxlength="50" placeholder="Your name" autocomplete="name" required />
-          <button class="submit-button" id="startButton" type="submit">Start hunt</button>
         </div>
+        <label for="passwordInput">Create a password or enter your existing password</label>
+        <div class="code-row">
+          <input id="passwordInput" name="password" type="password" minlength="8" maxlength="128" placeholder="At least 8 characters" autocomplete="current-password" required />
+          <button class="submit-button" id="startButton" type="submit">Continue</button>
+        </div>
+        <p class="welcome-copy">First visit? Your name and password create your account. Returning? Use the same name and password to restore your saved progress.</p>
         <p class="feedback" id="welcomeFeedback" role="status" aria-live="polite"></p>
       </form>
     </section>
