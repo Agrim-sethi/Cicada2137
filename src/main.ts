@@ -1,183 +1,147 @@
 import "./style.css";
 
-type Puzzle = {
-  title: string;
-  html: string;
+type Puzzle = { id: number; title: string; riddle_html: string };
+type Progress = {
+  participant: { name: string; unlockedThrough: number };
+  puzzles: Puzzle[];
+  completions: Array<{ puzzleId: number; completedAt: string }>;
+  completed: boolean;
 };
 
-// These are the temporary passcodes in the supplied HTML.
-// Replace each "00" with the real code printed on its campus chit.
-const PASSCODES: readonly string[] = ["00", "00", "00"];
-
-const puzzles: readonly Puzzle[] = [
-  {
-    title: "Find The Number",
-    html: `
-      <p>Out of the right corner of my <strong>EYE</strong>, i saw a number not too <strong>HIGH</strong></p>
-      <p>When through my checque, i bought a single <strong>CHOCOPIE</strong>, there i saw it, painted in red, i won't <strong>LIE</strong></p>
-    `,
-  },
-  {
-    title: "Enter What You Found Upon Searching Through The Something Described Below",
-    html: `
-      <p>When it's the first school of the <strong>DAY</strong>, something right outside the world of wisdom points to something, they <strong>SAY</strong>; All i can say is let your <strong>WAY</strong> be guided by the <strong>SUNRAY</strong>.</p>
-    `,
-  },
-  {
-    title: "Enter What You Found Upon Searching Through The Something Described Below",
-    html: `
-      <p>After 22 years of <strong>GLOOM</strong>, its about to go <strong>BOOM</strong>, But the two similar things that used to be the cause of <strong>DOOM</strong>, now lay still near some bright stairs, after all the danger they once used to <strong>LOOM</strong>.</p>
-    `,
-  },
-];
-
-const STORAGE_KEY = "sanawar-treasure-hunt-progress";
-
-function getElement<T extends HTMLElement>(id: string): T {
-  const element = document.getElementById(id);
-
-  if (!element) {
-    throw new Error(`Required page element #${id} was not found.`);
-  }
-
-  return element as T;
+function el<T extends HTMLElement>(id: string): T {
+  const node = document.getElementById(id);
+  if (!node) throw new Error("Missing page element: " + id);
+  return node as T;
 }
-
-const navButtons = Array.from(
-  document.querySelectorAll<HTMLButtonElement>("[data-nav]"),
-);
-const codeForm = getElement<HTMLFormElement>("codeForm");
-const codeInput = getElement<HTMLInputElement>("codeInput");
-const feedback = getElement<HTMLParagraphElement>("feedback");
-const puzzleSection = getElement<HTMLElement>("puzzleSection");
-const completion = getElement<HTMLElement>("completion");
-const puzzleNumber = getElement<HTMLParagraphElement>("puzzleNumber");
-const puzzleTitle = getElement<HTMLHeadingElement>("puzzleTitle");
-const riddleCopy = getElement<HTMLDivElement>("riddleCopy");
-const submitButton = getElement<HTMLButtonElement>("submitButton");
-const restartButton = getElement<HTMLButtonElement>("restartButton");
-
-function readProgress(): number {
-  try {
-    const saved = Number(window.localStorage.getItem(STORAGE_KEY));
-
-    if (Number.isInteger(saved) && saved >= 0 && saved < puzzles.length) {
-      return saved;
-    }
-  } catch {
-    // The game still works if browser storage is unavailable.
-  }
-
-  return 0;
+async function api<T>(action: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers);
+  headers.set("Content-Type", "application/json");
+  const response = await fetch("/api/index?action=" + action, { ...options, headers, credentials: "same-origin" });
+  const data = await response.json().catch(() => ({})) as T & { error?: string };
+  if (!response.ok) throw new Error(data.error || "Something went wrong. Please try again.");
+  return data;
 }
+const welcome = el<HTMLElement>("welcomePanel");
+const game = el<HTMLElement>("gameArea");
+const nameForm = el<HTMLFormElement>("nameForm");
+const nameInput = el<HTMLInputElement>("nameInput");
+const startButton = el<HTMLButtonElement>("startButton");
+const welcomeFeedback = el<HTMLElement>("welcomeFeedback");
+const participantName = el<HTMLElement>("participantName");
+const nav = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-nav]"));
+const codeForm = el<HTMLFormElement>("codeForm");
+const codeInput = el<HTMLInputElement>("codeInput");
+const feedback = el<HTMLElement>("feedback");
+const puzzleSection = el<HTMLElement>("puzzleSection");
+const completion = el<HTMLElement>("completion");
+const puzzleNumber = el<HTMLElement>("puzzleNumber");
+const puzzleTitle = el<HTMLHeadingElement>("puzzleTitle");
+const riddleCopy = el<HTMLDivElement>("riddleCopy");
+const submitButton = el<HTMLButtonElement>("submitButton");
+const reviewButton = el<HTMLButtonElement>("restartButton");
+let progress: Progress | null = null;
+let currentPuzzle = 1;
 
-let currentPuzzle = 0;
-let unlockedThrough = readProgress();
-
-function saveProgress(): void {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, String(unlockedThrough));
-  } catch {
-    // Progress will remain available until the page is refreshed.
-  }
+function say(node: HTMLElement, message: string, success = false): void {
+  node.textContent = message;
+  node.classList.toggle("success", success);
 }
-
-function updateNavigation(): void {
-  navButtons.forEach((button, index) => {
-    const available = index <= unlockedThrough;
-    const completed = index < unlockedThrough;
-
+function showWelcome(message = ""): void {
+  welcome.hidden = false;
+  game.hidden = true;
+  say(welcomeFeedback, message);
+}
+function updateNav(): void {
+  if (!progress) return;
+  const done = new Set(progress.completions.map((item) => item.puzzleId));
+  nav.forEach((button) => {
+    const id = Number(button.dataset.nav);
+    const available = id <= progress!.participant.unlockedThrough;
     button.disabled = !available;
     button.classList.toggle("available", available);
-    button.classList.toggle("active", index === currentPuzzle);
-    button.classList.toggle("completed", completed);
-    button.textContent = `Puzzle ${index + 1}${completed ? " · Complete" : available ? "" : " · Locked"}`;
-
-    if (index === currentPuzzle) {
-      button.setAttribute("aria-current", "step");
-    } else {
-      button.removeAttribute("aria-current");
-    }
+    button.classList.toggle("active", id === currentPuzzle);
+    button.classList.toggle("completed", done.has(id));
+    button.textContent = "Puzzle " + id + (done.has(id) ? " · Complete" : available ? "" : " · Locked");
+    if (id === currentPuzzle) button.setAttribute("aria-current", "step");
+    else button.removeAttribute("aria-current");
   });
 }
-
-function showFeedback(message: string, isSuccess = false): void {
-  feedback.textContent = message;
-  feedback.classList.toggle("success", isSuccess);
-}
-
-function renderPuzzle(index: number): void {
-  if (index < 0 || index >= puzzles.length || index > unlockedThrough) {
-    return;
-  }
-
-  currentPuzzle = index;
-  const puzzle = puzzles[index];
-
-  puzzleNumber.textContent = `Puzzle ${index + 1} of ${puzzles.length}`;
+function renderPuzzle(id: number): void {
+  if (!progress) return;
+  const puzzle = progress.puzzles.find((item) => item.id === id);
+  if (!puzzle || id > progress.participant.unlockedThrough) return;
+  currentPuzzle = id;
+  puzzleNumber.textContent = "Puzzle " + id + " of 3";
   puzzleTitle.textContent = puzzle.title;
-  riddleCopy.innerHTML = puzzle.html;
+  riddleCopy.innerHTML = puzzle.riddle_html;
   codeInput.value = "";
-  showFeedback("");
+  say(feedback, "");
   submitButton.disabled = false;
-  updateNavigation();
-}
-
-function showCompletion(): void {
-  puzzleSection.hidden = true;
-  completion.hidden = false;
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-navButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const index = Number(button.dataset.nav);
-
-    if (Number.isInteger(index) && index <= unlockedThrough) {
-      renderPuzzle(index);
-    }
-  });
-});
-
-codeForm.addEventListener("submit", (event: SubmitEvent) => {
-  event.preventDefault();
-
-  const entered = codeInput.value.trim();
-
-  if (!entered) {
-    showFeedback("");
-    codeInput.focus();
-    return;
-  }
-
-  if (entered.toUpperCase() !== PASSCODES[currentPuzzle].toUpperCase()) {
-    showFeedback("Incorrect passcode. Please check the chit and try again.");
-    codeInput.select();
-    return;
-  }
-
-  if (currentPuzzle < puzzles.length - 1) {
-    unlockedThrough = Math.max(unlockedThrough, currentPuzzle + 1);
-    saveProgress();
-    showFeedback("Correct passcode. The next puzzle is now unlocked.", true);
-    updateNavigation();
-
-    const nextPuzzle = currentPuzzle + 1;
-    window.setTimeout(() => {
-      renderPuzzle(nextPuzzle);
-    }, 350);
-    return;
-  }
-
-  showCompletion();
-});
-
-restartButton.addEventListener("click", () => {
-  // "Review puzzles" returns to the first puzzle without relocking progress.
-  completion.hidden = true;
   puzzleSection.hidden = false;
-  renderPuzzle(0);
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  completion.hidden = true;
+  updateNav();
+}
+function renderProgress(data: Progress): void {
+  progress = data;
+  participantName.textContent = data.participant.name;
+  welcome.hidden = true;
+  game.hidden = false;
+  if (data.completed) {
+    puzzleSection.hidden = true;
+    completion.hidden = false;
+    currentPuzzle = 3;
+    updateNav();
+    return;
+  }
+  renderPuzzle(data.participant.unlockedThrough);
+}
+async function loadProgress(): Promise<void> {
+  try {
+    renderProgress(await api<Progress>("progress"));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not load progress.";
+    if (message.includes("name to begin") || message.includes("session has expired")) showWelcome();
+    else showWelcome(message);
+  }
+}
+nameForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const name = nameInput.value.trim().replace(/\s+/g, " ");
+  if (name.length < 2 || name.length > 50) return say(welcomeFeedback, "Please enter a name between 2 and 50 characters.");
+  startButton.disabled = true;
+  say(welcomeFeedback, "Starting your hunt…");
+  try {
+    await api("register", { method: "POST", body: JSON.stringify({ name }) });
+    await loadProgress();
+  } catch (error) {
+    say(welcomeFeedback, error instanceof Error ? error.message : "Could not start the hunt.");
+  } finally { startButton.disabled = false; }
 });
-
-renderPuzzle(Math.min(unlockedThrough, puzzles.length - 1));
+nav.forEach((button) => button.addEventListener("click", () => renderPuzzle(Number(button.dataset.nav))));
+codeForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const passcode = codeInput.value.trim();
+  if (!passcode) return say(feedback, "Enter the passcode written on your chit.");
+  submitButton.disabled = true;
+  say(feedback, "Checking passcode…");
+  try {
+    const result = await api<{ correct: boolean; message: string }>("verify", {
+      method: "POST", body: JSON.stringify({ puzzleId: currentPuzzle, passcode }),
+    });
+    if (!result.correct) {
+      say(feedback, result.message);
+      codeInput.select();
+      return;
+    }
+    say(feedback, result.message, true);
+    const updated = await api<Progress>("progress");
+    progress = updated;
+    updateNav();
+    if (updated.completed) window.setTimeout(() => renderProgress(updated), 450);
+    else window.setTimeout(() => renderPuzzle(updated.participant.unlockedThrough), 450);
+  } catch (error) {
+    say(feedback, error instanceof Error ? error.message : "Could not verify that passcode.");
+  } finally { submitButton.disabled = false; }
+});
+reviewButton.addEventListener("click", () => renderPuzzle(1));
+void loadProgress();
