@@ -25,6 +25,7 @@ const welcome = el<HTMLElement>("welcomePanel");
 const game = el<HTMLElement>("gameArea");
 const nameForm = el<HTMLFormElement>("nameForm");
 const nameInput = el<HTMLInputElement>("nameInput");
+const passwordInput = el<HTMLInputElement>("passwordInput");
 const startButton = el<HTMLButtonElement>("startButton");
 const welcomeFeedback = el<HTMLElement>("welcomeFeedback");
 const participantName = el<HTMLElement>("participantName");
@@ -110,14 +111,18 @@ async function loadProgress(): Promise<void> {
 nameForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const name = nameInput.value.trim().replace(/\s+/g, " ");
+  const password = passwordInput.value;
   if (name.length < 2 || name.length > 50) return say(welcomeFeedback, "Please enter a name between 2 and 50 characters.");
+  if (password.length < 8 || password.length > 128) return say(welcomeFeedback, "Your password must be between 8 and 128 characters.");
   startButton.disabled = true;
-  say(welcomeFeedback, "Starting your hunt…");
+  say(welcomeFeedback, "Signing you in…");
   try {
-    await api("register", { method: "POST", body: JSON.stringify({ name }) });
+    await api("register", { method: "POST", body: JSON.stringify({ name, password }) });
+    passwordInput.value = "";
     await loadProgress();
   } catch (error) {
-    say(welcomeFeedback, error instanceof Error ? error.message : "Could not start the hunt.");
+    passwordInput.value = "";
+    say(welcomeFeedback, error instanceof Error ? error.message : "Could not sign in.");
   } finally { startButton.disabled = false; }
 });
 participantLogout.addEventListener("click", async () => {
